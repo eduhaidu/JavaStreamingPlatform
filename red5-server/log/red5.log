@@ -1,33 +1,33 @@
-2025-12-01 13:11:15,341 [main] INFO  org.red5.server.Launcher - Red5 Server 2.0.23 (https://github.com/Red5)
-2025-12-01 13:11:15,512 [main] INFO  org.red5.server.net.sse.SSEManager - Starting SSE Manager
-2025-12-01 13:11:15,513 [main] INFO  org.red5.server.net.sse.SSEManager - SSE Manager started with 300000 connection timeout and 30000 keep-alive interval
-2025-12-01 13:11:15,588 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - RTMP will be bound to [0.0.0.0:1935]
-2025-12-01 13:11:15,589 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - RTMP Mina Transport Settings
+2025-12-01 19:21:07,520 [main] INFO  org.red5.server.Launcher - Red5 Server 2.0.23 (https://github.com/Red5)
+2025-12-01 19:21:07,705 [main] INFO  org.red5.server.net.sse.SSEManager - Starting SSE Manager
+2025-12-01 19:21:07,706 [main] INFO  org.red5.server.net.sse.SSEManager - SSE Manager started with 300000 connection timeout and 30000 keep-alive interval
+2025-12-01 19:21:07,785 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - RTMP will be bound to [0.0.0.0:1935]
+2025-12-01 19:21:07,786 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - RTMP Mina Transport Settings
 Acceptor style: default I/O threads: 8
 TCP no-delay: true keep-alive: false
-2025-12-01 13:11:15,595 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - Traffic class modification is disabled
-2025-12-01 13:11:15,595 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - Send buffer size: 65536 recv buffer size: 65536 so linger: -1 traffic class: 0
-2025-12-01 13:11:15,605 [main] INFO  org.red5.server.ContextLoader - ContextLoader init
-2025-12-01 13:11:15,606 [main] INFO  org.red5.server.ContextLoader - Loading: default.context = ${red5.root}/webapps/red5-default.xml => /Users/eduhaidu/JavaStreamingPlatform/red5-server/webapps/red5-default.xml
-2025-12-01 13:11:15,629 [main] INFO  org.red5.server.Context - Setting parent bean factory as core
-2025-12-01 13:11:15,667 [main] INFO  o.red5.server.tomcat.TomcatLoader - Loading Tomcat
-2025-12-01 13:11:15,667 [main] INFO  o.r.net.websocket.WebSocketPlugin - Setting server scope listener
-2025-12-01 13:11:15,668 [main] INFO  o.r.net.websocket.WebSocketPlugin - Got global scope: default
-2025-12-01 13:11:15,668 [main] INFO  o.red5.server.tomcat.TomcatLoader - Server root: /Users/eduhaidu/JavaStreamingPlatform/red5-server
-2025-12-01 13:11:15,668 [main] INFO  o.red5.server.tomcat.TomcatLoader - Config root: /Users/eduhaidu/JavaStreamingPlatform/red5-server/conf
-2025-12-01 13:11:15,675 [main] INFO  o.red5.server.tomcat.TomcatLoader - Application root: /Users/eduhaidu/JavaStreamingPlatform/red5-server/webapps
-2025-12-01 13:11:15,676 [main] INFO  org.red5.server.tomcat.WarDeployer - War deployer service created
-2025-12-01 13:11:15,676 [main] INFO  org.red5.server.tomcat.WarDeployer - Starting WarDeployer - webapps directory: /Users/eduhaidu/JavaStreamingPlatform/red5-server/webapps
-2025-12-01 13:11:15,676 [main] INFO  org.red5.server.tomcat.WarDeployer - Deploy wars without app start
-2025-12-01 13:11:15,697 [main] WARN  o.a.tomcat.util.net.SSLHostConfig - The property [insecureRenegotiation] was set on the SSLHostConfig named [_default_] and is for the [OPENSSL] configuration syntax but the SSLHostConfig is being used with the [JSSE] configuration syntax
-2025-12-01 13:11:15,698 [main] INFO  o.red5.server.tomcat.TomcatLoader - Starting Tomcat servlet engine
-2025-12-01 13:11:15,751 [main] INFO  o.a.c.http11.Http11Nio2Protocol - Initializing ProtocolHandler ["http-nio2-0.0.0.0-5080"]
-2025-12-01 13:11:15,762 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
-2025-12-01 13:11:15,762 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.13]
-2025-12-01 13:11:15,793 [main] INFO  o.a.catalina.startup.ContextConfig - No global web.xml found
-2025-12-01 13:11:15,819 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/] - No Spring WebApplicationInitializer types detected on classpath
-2025-12-01 13:11:16,700 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/live] - No Spring WebApplicationInitializer types detected on classpath
-2025-12-01 13:11:16,717 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/chat] - No Spring WebApplicationInitializer types detected on classpath
-2025-12-01 13:11:16,718 [main] INFO  o.r.net.websocket.WebSocketPlugin - getWsServerContainerInstance: /chat
-2025-12-01 13:11:16,737 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/vod] - No Spring WebApplicationInitializer types detected on classpath
-2025-12-01 13:11:16,748 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/oflaDemo] - No Spring WebApplicationInitializer types detected on classpath
+2025-12-01 19:21:07,793 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - Traffic class modification is disabled
+2025-12-01 19:21:07,794 [main] INFO  o.r.s.net.rtmp.RTMPMinaTransport - Send buffer size: 65536 recv buffer size: 65536 so linger: -1 traffic class: 0
+2025-12-01 19:21:07,804 [main] INFO  org.red5.server.ContextLoader - ContextLoader init
+2025-12-01 19:21:07,805 [main] INFO  org.red5.server.ContextLoader - Loading: default.context = ${red5.root}/webapps/red5-default.xml => /Users/eduhaidu/JavaStreamingPlatform/red5-server/webapps/red5-default.xml
+2025-12-01 19:21:07,828 [main] INFO  org.red5.server.Context - Setting parent bean factory as core
+2025-12-01 19:21:07,867 [main] INFO  o.red5.server.tomcat.TomcatLoader - Loading Tomcat
+2025-12-01 19:21:07,868 [main] INFO  o.r.net.websocket.WebSocketPlugin - Setting server scope listener
+2025-12-01 19:21:07,868 [main] INFO  o.r.net.websocket.WebSocketPlugin - Got global scope: default
+2025-12-01 19:21:07,869 [main] INFO  o.red5.server.tomcat.TomcatLoader - Server root: /Users/eduhaidu/JavaStreamingPlatform/red5-server
+2025-12-01 19:21:07,869 [main] INFO  o.red5.server.tomcat.TomcatLoader - Config root: /Users/eduhaidu/JavaStreamingPlatform/red5-server/conf
+2025-12-01 19:21:07,877 [main] INFO  o.red5.server.tomcat.TomcatLoader - Application root: /Users/eduhaidu/JavaStreamingPlatform/red5-server/webapps
+2025-12-01 19:21:07,877 [main] INFO  org.red5.server.tomcat.WarDeployer - War deployer service created
+2025-12-01 19:21:07,877 [main] INFO  org.red5.server.tomcat.WarDeployer - Starting WarDeployer - webapps directory: /Users/eduhaidu/JavaStreamingPlatform/red5-server/webapps
+2025-12-01 19:21:07,877 [main] INFO  org.red5.server.tomcat.WarDeployer - Deploy wars without app start
+2025-12-01 19:21:07,901 [main] WARN  o.a.tomcat.util.net.SSLHostConfig - The property [insecureRenegotiation] was set on the SSLHostConfig named [_default_] and is for the [OPENSSL] configuration syntax but the SSLHostConfig is being used with the [JSSE] configuration syntax
+2025-12-01 19:21:07,902 [main] INFO  o.red5.server.tomcat.TomcatLoader - Starting Tomcat servlet engine
+2025-12-01 19:21:07,988 [main] INFO  o.a.c.http11.Http11Nio2Protocol - Initializing ProtocolHandler ["http-nio2-0.0.0.0-5080"]
+2025-12-01 19:21:08,000 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-12-01 19:21:08,000 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.13]
+2025-12-01 19:21:08,034 [main] INFO  o.a.catalina.startup.ContextConfig - No global web.xml found
+2025-12-01 19:21:08,061 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/] - No Spring WebApplicationInitializer types detected on classpath
+2025-12-01 19:21:08,905 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/live] - No Spring WebApplicationInitializer types detected on classpath
+2025-12-01 19:21:08,923 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/chat] - No Spring WebApplicationInitializer types detected on classpath
+2025-12-01 19:21:08,924 [main] INFO  o.r.net.websocket.WebSocketPlugin - getWsServerContainerInstance: /chat
+2025-12-01 19:21:08,943 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/vod] - No Spring WebApplicationInitializer types detected on classpath
+2025-12-01 19:21:08,955 [main] INFO  o.a.c.c.C.[.[0.0.0.0].[/oflaDemo] - No Spring WebApplicationInitializer types detected on classpath

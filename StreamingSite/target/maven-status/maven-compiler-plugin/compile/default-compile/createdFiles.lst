@@ -1,3 +1,2 @@
 org/distributed/streaming/StreamManager.class
-org/distributed/streaming/StreamManager$KafkaPacketListener.class
 org/distributed/streaming/StreamingSite.class
