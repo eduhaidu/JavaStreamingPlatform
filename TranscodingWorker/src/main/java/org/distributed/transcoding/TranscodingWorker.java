@@ -32,6 +32,9 @@ import io.minio.UploadObjectArgs;
 public class TranscodingWorker {
     private static final ExecutorService executor = Executors.newCachedThreadPool();
     private static final Set<String> uploadedFiles = ConcurrentHashMap.newKeySet();
+    private static final ConcurrentHashMap<String, Process> activeProcesses = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Thread> monitorThreads = new ConcurrentHashMap<>();
+    private static volatile boolean running = true;
 
     private static final String MINIO_URL = "http://localhost:9000";
     private static final String MINIO_USER = "minioadmin";
@@ -39,6 +42,14 @@ public class TranscodingWorker {
     private static final String MINIO_BUCKET = "video-storage";
 
     public static void main(String[] args) {
+        // Add shutdown hook to cleanup
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down TranscodingWorker...");
+            running = false;
+            stopAllProcesses();
+            executor.shutdown();
+        }));
+
         Properties props = new Properties();
         props.put("bootstrap.servers", "localhost:9092");
         props.put("group.id", "transcoding-worker-group");
@@ -51,7 +62,7 @@ public class TranscodingWorker {
         System.out.println("Transcoding Worker started and listening to 'live-stream' topic...");
 
         try {
-            while (true) { 
+            while (running) { 
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
                 for (ConsumerRecord<String, String> record : records){
                     String streamName = record.key();
@@ -60,7 +71,9 @@ public class TranscodingWorker {
                     System.out.println("Received message for stream: " + streamName + " with action: " + action);
 
                     if("START".equals(action)){
-                        executor.submit(() -> startStreaming(record.key()));
+                        executor.submit(() -> startStreaming(streamName));
+                    } else if("STOP".equals(action)) {
+                        stopStreaming(streamName);
                     }
                 }
             }
@@ -69,20 +82,59 @@ public class TranscodingWorker {
         }
     }
 
+    private static void stopStreaming(String streamName) {
+        System.out.println("Stopping stream: " + streamName);
+        
+        // Stop FFmpeg process
+        Process process = activeProcesses.remove(streamName);
+        if (process != null && process.isAlive()) {
+            process.destroy();
+            try {
+                process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS);
+                if (process.isAlive()) {
+                    process.destroyForcibly();
+                }
+                System.out.println("FFmpeg process stopped for stream: " + streamName);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        
+        // Stop monitor thread
+        Thread monitorThread = monitorThreads.remove(streamName);
+        if (monitorThread != null && monitorThread.isAlive()) {
+            monitorThread.interrupt();
+            System.out.println("Monitor thread stopped for stream: " + streamName);
+        }
+    }
+
+    private static void stopAllProcesses() {
+        System.out.println("Stopping all active processes...");
+        for (String streamName : activeProcesses.keySet()) {
+            stopStreaming(streamName);
+        }
+    }
+
     private static void startStreaming(String streamName){
         String rtmpUrl = "rtmp://localhost/live/" + streamName;
+        String outputFilename = streamName + ".m3u8";
         String outputDir = "hls";
-        String fileName = streamName + ".m3u8";
-        Path localPath = Paths.get(outputDir, fileName);
+        Path localPath = Paths.get(outputDir, outputFilename);
 
-        new File(outputDir).mkdirs();
+        File dir = new File(outputDir);
+        if (!dir.exists()){
+            dir.mkdirs();
+        }
 
         MinioClient minioClient = MinioClient.builder()
             .endpoint(MINIO_URL)
             .credentials(MINIO_USER, MINIO_PASSWORD)
             .build();
 
-        executor.submit(() -> monitorAndUpload(minioClient, outputDir, streamName));
+        Thread monitorThread = new Thread(() -> monitorAndUpload(minioClient, outputDir, streamName));
+        monitorThread.setDaemon(false);
+        monitorThread.start();
+        monitorThreads.put(streamName, monitorThread);
 
         System.out.println("Starting FFmpeg for stream: " + streamName);
         ProcessBuilder pb = new ProcessBuilder(
@@ -99,43 +151,66 @@ public class TranscodingWorker {
 
         try {
             Process process = pb.start();
-            new Thread(()->{
+            activeProcesses.put(streamName, process);
+
+            new Thread(() -> {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))){
                     while(reader.readLine() != null){
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }}).start();
+            }).start();
 
             int exitCode = process.waitFor();
             System.out.println("Transcoding finished with code: " + exitCode);
+            
+            // Cleanup
+            activeProcesses.remove(streamName);
+            Thread monitor = monitorThreads.remove(streamName);
+            if (monitor != null) {
+                monitor.interrupt();
+            }
         } catch (Exception e) {
             e.printStackTrace();
+            activeProcesses.remove(streamName);
         }
     }
-
 
     private static void monitorAndUpload(MinioClient client, String directory, String streamName){
         File dir = new File(directory);
         System.out.println("Upload monitor started for directory: " + directory);
 
-        while (true) { 
+        while (running && !Thread.currentThread().isInterrupted()) { 
             File[] files = dir.listFiles();
             if (files!=null){
                 for (File file : files){
                     if (!file.getName().startsWith(streamName)) continue;
 
                     try {
+                        // Wait for file to be fully written (check size stability)
+                        long size1 = file.length();
+                        Thread.sleep(100);
+                        long size2 = file.length();
+                        
+                        if (size1 != size2) {
+                            continue; // File still being written
+                        }
+
                         if(file.getName().endsWith(".m3u8")){
                             uploadFile(client, file, "application/x-mpegURL");
                         }
                         else if (file.getName().endsWith(".ts")){
-                            if(!uploadedFiles.contains(file.getName())){
+                            String fileKey = streamName + ":" + file.getName();
+                            if(!uploadedFiles.contains(fileKey)){
                                 uploadFile(client, file, "video/MP2T");
-                                uploadedFiles.add(file.getName());
+                                uploadedFiles.add(fileKey);
+                                System.out.println("Uploaded new segment: " + file.getName());
                             }
                         }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
                     } catch (Exception e) {
                         System.err.println("Failed to upload file: " + file.getName() + " Error: " + e.getMessage());
                     }
@@ -148,6 +223,7 @@ public class TranscodingWorker {
                 break;
             }
         }
+        System.out.println("Upload monitor stopped for stream: " + streamName);
     }
 
     private static void uploadFile(MinioClient client, File file, String contentType) throws Exception {
