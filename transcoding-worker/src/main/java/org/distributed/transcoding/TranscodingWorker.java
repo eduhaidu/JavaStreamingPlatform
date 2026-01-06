@@ -106,6 +106,60 @@ public class TranscodingWorker {
             monitorThread.interrupt();
             System.out.println("Monitor thread stopped for stream: " + streamName);
         }
+        
+        // Archive stream for VOD
+        executor.submit(() -> archiveStream(streamName));
+    }
+    
+    private static void archiveStream(String streamName) {
+        try {
+            System.out.println("Archiving stream: " + streamName);
+            Thread.sleep(2000); // Wait for final segments to be written
+            
+            String outputDir = "hls";
+            File dir = new File(outputDir);
+            File[] files = dir.listFiles((d, name) -> name.startsWith(streamName));
+            
+            if (files == null || files.length == 0) {
+                System.out.println("No files found to archive for: " + streamName);
+                return;
+            }
+            
+            MinioClient minioClient = MinioClient.builder()
+                .endpoint(MINIO_URL)
+                .credentials(MINIO_USER, MINIO_PASSWORD)
+                .build();
+            
+            String vodPrefix = "vod/" + streamName + "_" + System.currentTimeMillis() + "/";
+            
+            // Upload all segments and playlist with VOD prefix
+            for (File file : files) {
+                String vodObjectName = vodPrefix + file.getName();
+                String contentType = file.getName().endsWith(".m3u8") ? 
+                    "application/x-mpegURL" : "video/MP2T";
+                
+                minioClient.uploadObject(
+                    UploadObjectArgs.builder()
+                        .bucket(MINIO_BUCKET)
+                        .object(vodObjectName)
+                        .filename(file.getAbsolutePath())
+                        .contentType(contentType)
+                        .build()
+                );
+                System.out.println("Archived: " + vodObjectName);
+            }
+            
+            System.out.println("✓ Stream archived successfully: " + vodPrefix);
+            
+            // Cleanup local files after archiving
+            for (File file : files) {
+                file.delete();
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Failed to archive stream: " + streamName);
+            e.printStackTrace();
+        }
     }
 
     private static void stopAllProcesses() {
@@ -145,7 +199,7 @@ public class TranscodingWorker {
             "-f", "hls",
             "-hls_time", "4",
             "-hls_list_size", "5",
-            "-hls_flags", "delete_segments",
+            "-hls_playlist_type", "event",  // Creates VOD-compatible playlist
             localPath.toString()
         );
 

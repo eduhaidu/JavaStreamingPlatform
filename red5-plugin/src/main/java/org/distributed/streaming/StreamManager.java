@@ -93,23 +93,38 @@ public class StreamManager extends MultiThreadedApplicationAdapter {
         super.streamPublishStart(stream);
     }
 
-    // @Override
-    // public void streamBroadcastClose(IBroadcastStream stream) {
-    //     String streamName = stream.getPublishedName();
-    //     logger.info("Stream stopped: {}", streamName);
-    //     System.out.println("Stream stopped: " + streamName);
+    @Override
+    public void streamBroadcastClose(IBroadcastStream stream) {
+        String streamName = stream.getPublishedName();
+        logger.info("Stream stopped: {}", streamName);
+        System.out.println("Stream stopped: " + streamName);
         
-    //     if (producer != null) {
-    //         ProducerRecord<String, byte[]> record = new ProducerRecord<>(
-    //             TOPIC_NAME, 
-    //             streamName, 
-    //             "STOP".getBytes()
-    //         );
-    //         producer.send(record);
-    //     }
+        executor.submit(() -> {
+            if (producer != null) {
+                try {
+                    ProducerRecord<String, byte[]> record = new ProducerRecord<>(
+                        TOPIC_NAME, 
+                        streamName, 
+                        "STOP".getBytes()
+                    );
+                    producer.send(record, (RecordMetadata metadata, Exception exception) -> {
+                        if (exception != null) {
+                            logger.error("Error sending STOP message to Kafka for stream: " + streamName, exception);
+                            System.out.println("Error sending STOP message to Kafka for stream: " + streamName);
+                        } else {
+                            logger.info("STOP message sent to Kafka for stream: " + streamName);
+                            System.out.println("STOP message sent to Kafka for stream: " + streamName);
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Exception while sending STOP message to Kafka for stream: " + streamName, e);
+                    System.out.println("Exception while sending STOP message to Kafka: " + e.getMessage());
+                }
+            }
+        });
         
-    //     super.streamBroadcastClose(stream);
-    // }
+        super.streamBroadcastClose(stream);
+    }
 
     @Override
     public void appStop(IScope app) {
