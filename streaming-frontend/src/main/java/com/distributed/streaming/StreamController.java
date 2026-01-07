@@ -39,7 +39,7 @@ public class StreamController {
     }
 
     @GetMapping("/stream/{filename}")
-    public ResponseEntity<InputStreamResource> proxyStream(@PathVariable String filename) {
+    public ResponseEntity<InputStreamResource> proxyStream(@PathVariable("filename") String filename) {
         try {
             System.out.println("=== Stream Request ===");
             System.out.println("Fetching from MinIO bucket: " + BUCKET_NAME + "/" + filename);
@@ -101,8 +101,8 @@ public class StreamController {
     
     @GetMapping("/vod/{vodPath}/{filename}")
     public ResponseEntity<InputStreamResource> proxyVod(
-            @PathVariable String vodPath, 
-            @PathVariable String filename) {
+            @PathVariable("vodPath") String vodPath, 
+            @PathVariable("filename") String filename) {
         try {
             String objectPath = "vod/" + vodPath + "/" + filename;
             System.out.println("=== VOD Request ===");
