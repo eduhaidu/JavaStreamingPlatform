@@ -1,61 +1,507 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Distributed Live Stream</title>
+    <title>Streaming Platform - Live Streams</title>
     <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
     <style>
-        body {
-            background-color: #222;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            margin-top: 50px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        h1 { margin-bottom: 20px; }
+
+        body {
+            background-color: #0e0e10;
+            color: #efeff1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Header */
+        .header {
+            background-color: #18181b;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2c2c34;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #9147ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #9147ff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #772ce8;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: #efeff1;
+            border: 1px solid #464649;
+        }
+
+        .btn-secondary:hover {
+            background-color: #464649;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 30px;
+        }
+
+        .section-header {
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .section-header p {
+            color: #adadb8;
+            font-size: 14px;
+        }
+
+        /* Stream Grid */
+        .stream-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stream-card {
+            background-color: #18181b;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .stream-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .stream-thumbnail {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stream-thumbnail::before {
+            content: '▶';
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .live-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #eb0400;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .viewer-count {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stream-info {
+            padding: 15px;
+        }
+
+        .stream-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #9147ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: white;
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details h3 {
+            font-size: 14px;
+            color: #efeff1;
+            margin-bottom: 2px;
+        }
+
+        .user-details p {
+            font-size: 13px;
+            color: #adadb8;
+        }
+
+        .stream-title {
+            font-size: 14px;
+            color: #adadb8;
+            margin-top: 8px;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background-color: #18181b;
+            border-radius: 8px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #adadb8;
+            margin-bottom: 20px;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: #adadb8;
+        }
+
+        .spinner {
+            border: 3px solid #2c2c34;
+            border-top: 3px solid #9147ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Video Player Modal */
+        .player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .player-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #9147ff;
+        }
+
+        #player-video {
+            width: 100%;
+            max-height: 80vh;
+        }
     </style>
 </head>
 <body>
+    <!-- Header -->
+    <div class="header">
+        <h1>
+            <span>🎮</span>
+            Streaming Platform
+        </h1>
+        <div class="header-right" id="headerNav">
+            <a href="/auth.html" class="btn btn-secondary">Login</a>
+        </div>
+    </div>
 
-    <h1>🔴 Live Stream: testStream</h1>
+    <!-- Main Content -->
+    <div class="container">
+        <div class="section-header">
+            <h2>Live Streams</h2>
+            <p id="streamCount">Loading streams...</p>
+        </div>
 
-    <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto" width="800" height="450">
-        <source src="/stream/testStream.m3u8" type="application/x-mpegURL">
-        
-        <p class="vjs-no-js">
-            To view this video please enable JavaScript, and consider upgrading to a web browser that
-            <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
-        </p>
-    </video>
+        <div id="loadingState" class="loading">
+            <div class="spinner"></div>
+            <p>Loading live streams...</p>
+        </div>
 
-    <ul id="stream-list"></ul>
+        <div id="streamGrid" class="stream-grid" style="display: none;"></div>
 
-    <script src="https://vjs.zencdn.net/8.6.1/video.min.js">
-        fetch('/streams')
-            .then(response => response.json())
-            .then(streams => {
-                const list = document.getElementById('stream-list');
-                streams.forEach(stream => {
-                    const listItem = document.createElement('li');
-                    const link = document.createElement('a');
-                    link.href = '#';
-                    link.textContent = stream;
-                    link.onclick = () => changeStream(stream);
-                    listItem.appendChild(link);
-                    list.appendChild(listItem);
-                });
-            });
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h3>📡 No Live Streams</h3>
+            <p>There are no live streams right now. Check back later!</p>
+            <a href="/auth.html" class="btn btn-primary">Start Streaming</a>
+        </div>
+    </div>
 
-        function changeStream(name){
-            var player = videojs('my-video');
-            player.src({ 
-                src: '/stream/' + name + '.m3u8',
-                type: 'application/x-mpegURL'
-            });
-            player.play();
+    <!-- Video Player Modal -->
+    <div id="playerModal" class="player-modal">
+        <div class="player-container">
+            <div class="player-header">
+                <div>
+                    <h2 id="playerTitle">Stream Title</h2>
+                    <p id="playerUsername" style="color: #adadb8;"></p>
+                </div>
+                <button class="close-btn" onclick="closePlayer()">&times;</button>
+            </div>
+            <video id="player-video" class="video-js vjs-big-play-centered" controls preload="auto">
+                <p class="vjs-no-js">
+                    To view this video please enable JavaScript
+                </p>
+            </video>
+        </div>
+    </div>
+
+    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:8080';
+        let player = null;
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            const headerNav = document.getElementById('headerNav');
+
+            if (token && username) {
+                headerNav.innerHTML = `
+                    <a href="/channel.html?username=${username}" class="btn btn-secondary">My Channel</a>
+                    <a href="#" class="btn btn-secondary" onclick="logout()">Logout</a>
+                `;
+            }
         }
-    </script>
 
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.reload();
+        }
+
+        // Load streams
+        async function loadStreams() {
+            try {
+                const response = await fetch(`${API_URL}/streams/previews`);
+                const streams = await response.json();
+
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (streams.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('streamCount').textContent = 'No streams online';
+                } else {
+                    document.getElementById('streamGrid').style.display = 'grid';
+                    document.getElementById('streamCount').textContent = 
+                        `${streams.length} ${streams.length === 1 ? 'stream' : 'streams'} online`;
+                    
+                    displayStreams(streams);
+                }
+            } catch (error) {
+                console.error('Error loading streams:', error);
+                document.getElementById('loadingState').innerHTML = 
+                    '<p style="color: #eb0400;">Failed to load streams. Please try again.</p>';
+            }
+        }
+
+        function displayStreams(streams) {
+            const grid = document.getElementById('streamGrid');
+            grid.innerHTML = '';
+
+            streams.forEach(stream => {
+                const card = createStreamCard(stream);
+                grid.appendChild(card);
+            });
+        }
+
+        function createStreamCard(stream) {
+            const card = document.createElement('a');
+            card.className = 'stream-card';
+            card.href = '#';
+            card.onclick = (e) => {
+                e.preventDefault();
+                openPlayer(stream);
+            };
+
+            const avatarContent = stream.avatarUrl 
+                ? `<img src="${API_URL}${stream.avatarUrl}" alt="${stream.username}">`
+                : stream.username.charAt(0).toUpperCase();
+
+            const viewerCount = stream.viewerCount || 0;
+            const streamTitle = stream.streamTitle || `${stream.username}'s stream`;
+
+            card.innerHTML = `
+                <div class="stream-thumbnail">
+                    <span class="live-badge">LIVE</span>
+                    <span class="viewer-count">
+                        <span>👁</span>
+                        <span>${viewerCount}</span>
+                    </span>
+                </div>
+                <div class="stream-info">
+                    <div class="stream-user">
+                        <div class="avatar">
+                            ${avatarContent}
+                        </div>
+                        <div class="user-details">
+                            <h3>${stream.username}</h3>
+                            <p>${viewerCount} ${viewerCount === 1 ? 'viewer' : 'viewers'}</p>
+                        </div>
+                    </div>
+                    <div class="stream-title">${streamTitle}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function openPlayer(stream) {
+            const modal = document.getElementById('playerModal');
+            const videoElement = document.getElementById('player-video');
+            
+            document.getElementById('playerTitle').textContent = 
+                stream.streamTitle || `${stream.username}'s stream`;
+            document.getElementById('playerUsername').textContent = stream.username;
+
+            if (player) {
+                player.dispose();
+            }
+
+            player = videojs('player-video', {
+                controls: true,
+                autoplay: true,
+                preload: 'auto',
+                fluid: false,
+                sources: [{
+                    src: `${API_URL}/stream/${stream.streamName}.m3u8`,
+                    type: 'application/x-mpegURL'
+                }]
+            });
+
+            modal.classList.add('active');
+        }
+
+        function closePlayer() {
+            const modal = document.getElementById('playerModal');
+            modal.classList.remove('active');
+            
+            if (player) {
+                player.pause();
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePlayer();
+            }
+        });
+
+        // Initialize
+        checkAuth();
+        loadStreams();
+
+        // Refresh streams every 30 seconds
+        setInterval(loadStreams, 30000);
+    </script>
 </body>
 </html>

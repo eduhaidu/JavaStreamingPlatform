@@ -2,6 +2,7 @@ package com.distributed.streaming;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -12,6 +13,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.distributed.streaming.dto.StreamPreviewDTO;
+import com.distributed.streaming.entity.User;
 
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
@@ -92,6 +96,28 @@ public class StreamController {
     @GetMapping("/streams")
     public ResponseEntity<List<StreamMetadata>> getActiveStreams() {
         return ResponseEntity.ok(streamRepository.findByIsLiveTrue());
+    }
+    
+    @GetMapping("/streams/previews")
+    public ResponseEntity<List<StreamPreviewDTO>> getStreamPreviews() {
+        List<StreamMetadata> streams = streamRepository.findByIsLiveTrue();
+        
+        List<StreamPreviewDTO> previews = streams.stream()
+            .map(stream -> {
+                User user = stream.getUser();
+                return new StreamPreviewDTO(
+                    stream.getStreamName(),
+                    stream.getStreamTitle(),
+                    user != null ? user.getUsername() : "Unknown",
+                    user != null ? user.getAvatarUrl() : null,
+                    stream.getViewerCount(),
+                    stream.getStartTime(),
+                    stream.isLive()
+                );
+            })
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(previews);
     }
     
     @GetMapping("/vod")
