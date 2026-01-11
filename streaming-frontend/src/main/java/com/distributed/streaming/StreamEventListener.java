@@ -15,12 +15,17 @@ public class StreamEventListener {
     public StreamEventListener(StreamRepository streamRepository, UserRepository userRepository) {
         this.streamRepository = streamRepository;
         this.userRepository = userRepository;
+        System.out.println("StreamEventListener initialized - ready to consume Kafka messages");
     }
 
     @KafkaListener(topics = "live-stream", groupId = "streaming-group")
     public void listen(ConsumerRecord<String, String> record) {
         String streamName = record.key();
         String message = record.value();
+        
+        System.out.println("=== KAFKA MESSAGE RECEIVED ===");
+        System.out.println("Stream Name: " + streamName);
+        System.out.println("Message: " + message);
 
         // Parse message format: "START|userId|username" or "STOP"
         if(message.startsWith("START")){
@@ -68,7 +73,17 @@ public class StreamEventListener {
             }
         } else if ("STOP".equals(message)) {
             System.out.println("Stream stopped: " + streamName);
-            // You can add logic here to mark the stream as ended
+            
+            // Find the stream and mark it as no longer live
+            StreamMetadata stream = streamRepository.findByStreamName(streamName);
+            if (stream != null) {
+                stream.setLive(false);
+                stream.setEndTime(java.time.LocalDateTime.now());
+                streamRepository.save(stream);
+                System.out.println("Stream marked as ended in database: " + streamName);
+            } else {
+                System.out.println("Warning: Stream not found in database: " + streamName);
+            }
         }
     }
 }

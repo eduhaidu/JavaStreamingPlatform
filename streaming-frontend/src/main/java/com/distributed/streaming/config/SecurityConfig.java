@@ -35,10 +35,11 @@ public class SecurityConfig {
                 // Public endpoints - no authentication required
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/stream/**").permitAll()
-                .requestMatchers("/streams").permitAll()
+                .requestMatchers("/streams/**").permitAll()
                 .requestMatchers("/vod/**").permitAll()
                 .requestMatchers("/channels/**").permitAll()
-                .requestMatchers("/api/avatars/**").permitAll()                .requestMatchers("/api/stream/**").permitAll()                .requestMatchers("/", "/index.html", "/auth.html", "/*.html", "/css/**", "/js/**", "/images/**", "/static/**").permitAll()
+                .requestMatchers("/api/avatars/**").permitAll()
+                .requestMatchers("/api/stream/**").permitAll()                .requestMatchers("/", "/index.html", "/auth.html", "/*.html", "/css/**", "/js/**", "/images/**", "/static/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow CORS preflight
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

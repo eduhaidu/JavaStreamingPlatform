@@ -16,8 +16,9 @@ public class StreamMetadata {
     private String streamName;
     private boolean isLive;
     private LocalDateTime startTime;
+    private LocalDateTime endTime;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
     
@@ -51,6 +52,14 @@ public class StreamMetadata {
     }
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
+    }
+    
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+    
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
     }
     
     public User getUser() {

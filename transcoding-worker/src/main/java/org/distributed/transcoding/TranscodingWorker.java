@@ -34,6 +34,7 @@ public class TranscodingWorker {
     private static final Set<String> uploadedFiles = ConcurrentHashMap.newKeySet();
     private static final ConcurrentHashMap<String, Process> activeProcesses = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Thread> monitorThreads = new ConcurrentHashMap<>();
+    private static final Set<String> activeStreams = ConcurrentHashMap.newKeySet();
     private static volatile boolean running = true;
 
     private static final String MINIO_URL = "http://localhost:9000";
@@ -70,7 +71,8 @@ public class TranscodingWorker {
 
                     System.out.println("Received message for stream: " + streamName + " with action: " + action);
 
-                    if("START".equals(action)){
+                    // Handle new message format: "START|userId|username" or old format "START"
+                    if(action.startsWith("START")){
                         executor.submit(() -> startStreaming(streamName));
                     } else if("STOP".equals(action)) {
                         stopStreaming(streamName);
@@ -84,6 +86,9 @@ public class TranscodingWorker {
 
     private static void stopStreaming(String streamName) {
         System.out.println("Stopping stream: " + streamName);
+        
+        // Mark stream as inactive to stop monitoring
+        activeStreams.remove(streamName);
         
         // Stop FFmpeg process
         Process process = activeProcesses.remove(streamName);
@@ -170,6 +175,9 @@ public class TranscodingWorker {
     }
 
     private static void startStreaming(String streamName){
+        // Mark stream as active
+        activeStreams.add(streamName);
+        
         String rtmpUrl = "rtmp://localhost/live/" + streamName;
         String outputFilename = streamName + ".m3u8";
         String outputDir = "hls";
@@ -220,6 +228,7 @@ public class TranscodingWorker {
             System.out.println("Transcoding finished with code: " + exitCode);
             
             // Cleanup
+            activeStreams.remove(streamName);
             activeProcesses.remove(streamName);
             Thread monitor = monitorThreads.remove(streamName);
             if (monitor != null) {
@@ -235,7 +244,7 @@ public class TranscodingWorker {
         File dir = new File(directory);
         System.out.println("Upload monitor started for directory: " + directory);
 
-        while (running && !Thread.currentThread().isInterrupted()) { 
+        while (running && !Thread.currentThread().isInterrupted() && activeStreams.contains(streamName)) { 
             File[] files = dir.listFiles();
             if (files!=null){
                 for (File file : files){
