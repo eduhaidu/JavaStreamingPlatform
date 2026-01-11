@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel Settings - Streaming Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0e0e10;
+            color: #efeff1;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: #18181b;
+            padding: 15px 30px;
+            border-bottom: 1px solid #2d2d31;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #9147ff;
+            font-size: 24px;
+        }
+        
+        .header a {
+            color: #efeff1;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .header a:hover {
+            background: #2d2d31;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        h2 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #efeff1;
+        }
+        
+        .settings-section {
+            background: #18181b;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .settings-section h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #efeff1;
+            border-bottom: 1px solid #2d2d31;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #adadb8;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0e0e10;
+            border: 1px solid #2d2d31;
+            border-radius: 4px;
+            color: #efeff1;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #9147ff;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        
+        .stream-key-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .stream-key-input {
+            flex: 1;
+            font-family: monospace;
+            background: #0e0e10;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: #9147ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #772ce8;
+        }
+        
+        button.secondary {
+            background: #2d2d31;
+        }
+        
+        button.secondary:hover {
+            background: #3d3d41;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #0e7c0e;
+            color: white;
+        }
+        
+        .message.error {
+            background: #c10020;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #adadb8;
+        }
+        
+        .hint {
+            font-size: 12px;
+            color: #717177;
+            margin-top: 5px;
+        }
+        
+        .copy-btn {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-top: 10px;
+            display: none;
+            border: 2px solid #2d2d31;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #2d2d31;
+            color: #efeff1;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .file-input-label:hover {
+            background: #3d3d41;
+        }
+        
+        .upload-status {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #adadb8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 Streaming Platform</h1>
+        <nav>
+            <a href="/index.html">Home</a>
+            <a href="#" id="channelLink">My Channel</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </nav>
+    </div>
+    
+    <div class="container">
+        <h2>⚙️ Channel Settings</h2>
+        
+        <div id="loading" class="loading">
+            <div style="font-size: 36px; margin-bottom: 15px;">⏳</div>
+            <p>Loading settings...</p>
+        </div>
+        
+        <div id="content" style="display: none;">
+            <div id="message" class="message"></div>
+            
+            <!-- Profile Settings -->
+            <div class="settings-section">
+                <h3>Profile Information</h3>
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Your username">
+                    <div class="hint">This will change your channel URL</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" disabled>
+                    <div class="hint">Email cannot be changed</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bio">Bio</label>
+                    <textarea id="bio" placeholder="Tell viewers about yourself..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Avatar</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="avatarFile" accept="image/*" onchange="handleAvatarUpload(event)">
+                        <label for="avatarFile" class="file-input-label">Choose File</label>
+                    </div>
+                    <div id="uploadStatus" class="upload-status"></div>
+                    <img id="avatarPreview" class="avatar-preview" alt="Avatar preview">
+                    <div class="hint">Upload an image (max 5MB). Supported: JPG, PNG, GIF</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="avatarUrl">Or use Avatar URL</label>
+                    <input type="url" id="avatarUrl" placeholder="https://example.com/avatar.jpg">
+                    <div class="hint">Paste a direct link to your profile picture</div>
+                </div>
+            </div>
+            
+            <!-- Stream Settings -->
+            <div class="settings-section">
+                <h3>Stream Settings</h3>
+                
+                <div class="form-group">
+                    <label for="streamKey">Stream Key</label>
+                    <div class="stream-key-container">
+                        <input type="text" id="streamKey" class="stream-key-input" readonly>
+                        <button class="secondary copy-btn" onclick="copyStreamKey()">Copy</button>
+                    </div>
+                    <div class="hint">Use this key in your streaming software (OBS, etc.)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>RTMP URL</label>
+                    <div class="stream-key-container">
+                        <input type="text" id="rtmpUrl" value="rtmp://localhost/live" readonly>
+                        <button class="secondary copy-btn" onclick="copyRtmpUrl()">Copy</button>
+                    </div>
+                    <div class="hint">Server URL for your streaming software</div>
+                </div>
+            </div>
+            
+            <!-- Save Button -->
+            <div class="button-group">
+                <button onclick="saveSettings()">Save Changes</button>
+                <button class="secondary" onclick="window.history.back()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8080';
+        let currentUser = null;
+        
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        
+        if (!token || !username) {
+            window.location.href = '/auth.html';
+        } else {
+            document.getElementById('channelLink').href = `/channel.html?username=${username}`;
+            loadSettings();
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/auth.html';
+        }
+        
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load settings');
+                }
+                
+                currentUser = await response.json();
+                
+                // Populate form
+                document.getElementById('username').value = currentUser.username || '';
+                document.getElementById('email').value = currentUser.email || '';
+                document.getElementById('bio').value = currentUser.bio || '';
+                document.getElementById('avatarUrl').value = currentUser.avatarUrl || '';
+                document.getElementById('streamKey').value = currentUser.streamKey || '';
+                
+                // Show avatar preview if exists
+                if (currentUser.avatarUrl) {
+                    const preview = document.getElementById('avatarPreview');
+                    preview.src = `${API_URL}${currentUser.avatarUrl}`;
+                    preview.style.display = 'block';
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            } catch (error) {
+                showMessage('Failed to load settings: ' + error.message, 'error');
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+            }
+        }
+        
+        async function saveSettings() {
+            const newUsername = document.getElementById('username').value.trim();
+            const bio = document.getElementById('bio').value.trim();
+            const avatarUrl = document.getElementById('avatarUrl').value.trim();
+            
+            if (!newUsername) {
+                showMessage('Username is required', 'error');
+                return;
+            }
+            
+            try {
+                const updates = {
+                    username: newUsername,
+                    bio: bio,
+                    avatarUrl: avatarUrl
+                };
+                
+                const response = await fetch(`${API_URL}/channels/${currentUser.username}/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updates)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Update localStorage if username changed
+                    if (newUsername !== currentUser.username) {
+                        localStorage.setItem('username', newUsername);
+                    }
+                    
+                    showMessage('Settings saved successfully!', 'success');
+                    
+                    // Redirect to channel page after 1.5 seconds
+                    setTimeout(() => {
+                        window.location.href = `/channel.html?username=${newUsername}`;
+                    }, 1500);
+                } else {
+                    showMessage(result.error || 'Failed to save settings', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        }
+        
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type}`;
+            msg.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 5000);
+        }
+        
+        function copyStreamKey() {
+            const streamKey = document.getElementById('streamKey');
+            streamKey.select();
+            document.execCommand('copy');
+            showMessage('Stream key copied to clipboard!', 'success');
+        }
+        
+        function copyRtmpUrl() {
+            const rtmpUrl = document.getElementById('rtmpUrl');
+            rtmpUrl.select();
+            document.execCommand('copy');
+            showMessage('RTMP URL copied to clipboard!', 'success');
+        }
+        
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file size
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('File size must be less than 5MB', 'error');
+                return;
+            }
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showMessage('Only image files are allowed', 'error');
+                return;
+            }
+            
+            const statusEl = document.getElementById('uploadStatus');
+            statusEl.textContent = 'Uploading...';
+            statusEl.style.color = '#adadb8';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`${API_URL}/upload/avatar`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Update avatar URL field
+                    document.getElementById('avatarUrl').value = result.url;
+                    
+                    // Show preview
+                    const preview = document.getElementById('avatarPreview');
+                    preview.src = `${API_URL}${result.url}`;
+                    preview.style.display = 'block';
+                    
+                    statusEl.textContent = '✓ Uploaded successfully!';
+                    statusEl.style.color = '#0e7c0e';
+                    
+                    showMessage('Avatar uploaded! Click "Save Changes" to apply.', 'success');
+                } else {
+                    statusEl.textContent = '✗ Upload failed';
+                    statusEl.style.color = '#c10020';
+                    showMessage(result.error || 'Upload failed', 'error');
+                }
+            } catch (error) {
+                statusEl.textContent = '✗ Upload failed';
+                statusEl.style.color = '#c10020';
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

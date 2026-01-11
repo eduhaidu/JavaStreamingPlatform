@@ -2,8 +2,13 @@ package com.distributed.streaming;
 
 import java.time.LocalDateTime;
 
+import com.distributed.streaming.entity.User;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class StreamMetadata {
@@ -11,6 +16,13 @@ public class StreamMetadata {
     private String streamName;
     private boolean isLive;
     private LocalDateTime startTime;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+    
+    private String streamTitle;
+    private Integer viewerCount;
 
     public StreamMetadata() {
     }
@@ -19,6 +31,7 @@ public class StreamMetadata {
         this.streamName = streamName;
         this.isLive = isLive;
         this.startTime = startTime;
+        this.viewerCount = 0;
     }
 
     public String getStreamName() {
@@ -38,5 +51,29 @@ public class StreamMetadata {
     }
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
+    }
+    
+    public User getUser() {
+        return user;
+    }
+    
+    public void setUser(User user) {
+        this.user = user;
+    }
+    
+    public String getStreamTitle() {
+        return streamTitle;
+    }
+    
+    public void setStreamTitle(String streamTitle) {
+        this.streamTitle = streamTitle;
+    }
+    
+    public Integer getViewerCount() {
+        return viewerCount;
+    }
+    
+    public void setViewerCount(Integer viewerCount) {
+        this.viewerCount = viewerCount;
     }
 }

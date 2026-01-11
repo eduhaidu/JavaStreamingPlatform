@@ -27,6 +27,12 @@
                   <include>org.lz4:lz4-java</include>
                   <include>org.xerial.snappy:snappy-java</include>
                   <include>org.slf4j:slf4j-api</include>
+                  <include>com.squareup.okhttp3:okhttp</include>
+                  <include>com.squareup.okio:okio</include>
+                  <include>com.squareup.okio:okio-jvm</include>
+                  <include>org.jetbrains.kotlin:kotlin-stdlib</include>
+                  <include>org.jetbrains.kotlin:kotlin-stdlib-common</include>
+                  <include>com.google.code.gson:gson</include>
                 </includes>
               </artifactSet>
               <filters>

@@ -2,10 +2,8 @@ package com.distributed.streaming;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.distributed.streaming.entity.User;
+import jakarta.persistence.*;
 
 @Entity
 public class VodRecording {
@@ -19,6 +17,10 @@ public class VodRecording {
     private LocalDateTime recordedAt;
     private Long duration;   // Duration in seconds (optional)
     private Long fileSize;   // Total size in bytes (optional)
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
     
     public VodRecording() {}
     
@@ -75,5 +77,13 @@ public class VodRecording {
 
     public void setFileSize(Long fileSize) {
         this.fileSize = fileSize;
+    }
+    
+    public User getUser() {
+        return user;
+    }
+    
+    public void setUser(User user) {
+        this.user = user;
     }
 }

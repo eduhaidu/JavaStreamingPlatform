@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel - Streaming Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0e0e10;
+            color: #efeff1;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: #18181b;
+            padding: 15px 30px;
+            border-bottom: 1px solid #2d2d31;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #9147ff;
+            font-size: 24px;
+        }
+        
+        .header a {
+            color: #efeff1;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .header a:hover {
+            background: #2d2d31;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .profile-header {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #18181b;
+            border-radius: 8px;
+        }
+        
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9147ff 0%, #c93bff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-info h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .live-badge {
+            display: inline-block;
+            background: #eb0400;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .profile-info p {
+            color: #adadb8;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .joined {
+            color: #717177;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #efeff1;
+        }
+        
+        .stream-card {
+            background: #18181b;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+        
+        .stream-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .stream-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #9147ff;
+            position: relative;
+        }
+        
+        .stream-live-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #eb0400;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .stream-info {
+            padding: 15px;
+        }
+        
+        .stream-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #efeff1;
+        }
+        
+        .stream-meta {
+            display: flex;
+            gap: 15px;
+            color: #adadb8;
+            font-size: 14px;
+        }
+        
+        .vods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .vod-card {
+            background: #18181b;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .vod-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .vod-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #2d2d44 0%, #3d3d54 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: #9147ff;
+        }
+        
+        .vod-info {
+            padding: 12px;
+        }
+        
+        .vod-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #efeff1;
+        }
+        
+        .vod-date {
+            color: #adadb8;
+            font-size: 13px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #adadb8;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #adadb8;
+        }
+        
+        .error {
+            background: #c10020;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 Streaming Platform</h1>
+        <nav>
+            <a href="/index.html">Home</a>
+            <a href="/settings.html" id="settingsLink" style="display: none;">Settings</a>
+            <a href="/auth.html" id="loginLink">Login</a>
+            <a href="#" id="logoutLink" style="display: none;" onclick="logout()">Logout</a>
+        </nav>
+    </div>
+    
+    <div class="container">
+        <div id="loading" class="loading">
+            <div style="font-size: 36px; margin-bottom: 15px;">⏳</div>
+            <p>Loading channel...</p>
+        </div>
+        
+        <div id="error" style="display: none;"></div>
+        
+        <div id="content" style="display: none;">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="avatar" id="avatar"></div>
+                <div class="profile-info">
+                    <h2 id="username">
+                        <span id="usernameText"></span>
+                        <span id="liveBadge" class="live-badge" style="display: none;">● LIVE</span>
+                    </h2>
+                    <p id="bio">No bio yet</p>
+                    <p class="joined" id="joined"></p>
+                </div>
+            </div>
+            
+            <!-- Current Live Stream -->
+            <div id="liveStreamSection" class="section" style="display: none;">
+                <h3>🔴 Live Now</h3>
+                <div class="stream-card" id="liveStreamCard">
+                    <div class="stream-thumbnail">
+                        🎥
+                        <div class="stream-live-indicator">LIVE</div>
+                    </div>
+                    <div class="stream-info">
+                        <div class="stream-title" id="liveStreamTitle">Live Stream</div>
+                        <div class="stream-meta">
+                            <span id="liveStreamTime">Started recently</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Past Broadcasts (VODs) -->
+            <div class="section">
+                <h3>📼 Past Broadcasts</h3>
+                <div id="vodsContainer">
+                    <div class="loading">Loading videos...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8080';
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+        
+        // Check if user is logged in and update header
+        const token = localStorage.getItem('token');
+        const loggedInUsername = localStorage.getItem('username');
+        if (token && loggedInUsername) {
+            document.getElementById('loginLink').style.display = 'none';
+            document.getElementById('logoutLink').style.display = 'inline';
+            
+            // Show settings link if viewing own channel
+            if (loggedInUsername === username) {
+                document.getElementById('settingsLink').style.display = 'inline';
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/auth.html';
+        }
+        
+        if (!username) {
+            showError('No channel specified');
+        } else {
+            loadChannel();
+        }
+        
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').className = 'error';
+            document.getElementById('error').textContent = message;
+        }
+        
+        async function loadChannel() {
+            try {
+                // Load channel profile
+                const profileRes = await fetch(`${API_URL}/channels/${username}`);
+                if (!profileRes.ok) {
+                    throw new Error('Channel not found');
+                }
+                const profile = await profileRes.json();
+                
+                // Display profile
+                displayProfile(profile);
+                
+                // Load VODs
+                loadVods();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            } catch (error) {
+                showError(error.message || 'Failed to load channel');
+            }
+        }
+        
+        function displayProfile(profile) {
+            document.getElementById('usernameText').textContent = profile.username;
+            
+            // Avatar
+            const avatar = document.getElementById('avatar');
+            if (profile.avatarUrl) {
+                const avatarUrl = profile.avatarUrl.startsWith('/api/') 
+                    ? `${API_URL}${profile.avatarUrl}` 
+                    : profile.avatarUrl;
+                avatar.innerHTML = `<img src="${avatarUrl}" alt="${profile.username}">`;
+            } else {
+                avatar.textContent = profile.username.charAt(0).toUpperCase();
+            }
+            
+            // Bio
+            document.getElementById('bio').textContent = profile.bio || 'No bio yet';
+            
+            // Joined date
+            const joinedDate = new Date(profile.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('joined').textContent = `Joined ${joinedDate}`;
+            
+            // Live status
+            if (profile.live) {
+                document.getElementById('liveBadge').style.display = 'inline-block';
+                document.getElementById('liveStreamSection').style.display = 'block';
+                document.getElementById('liveStreamTitle').textContent = profile.currentStreamName || 'Live Stream';
+                document.getElementById('liveStreamCard').onclick = () => {
+                    window.location.href = `/index.html?stream=${profile.currentStreamName}`;
+                };
+            }
+        }
+        
+        async function loadVods() {
+            try {
+                const res = await fetch(`${API_URL}/channels/${username}/vods`);
+                const vods = await res.json();
+                
+                const container = document.getElementById('vodsContainer');
+                
+                if (vods.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📹</div>
+                            <p>No past broadcasts yet</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="vods-grid" id="vodsGrid"></div>';
+                    const grid = document.getElementById('vodsGrid');
+                    
+                    vods.forEach(vod => {
+                        const vodCard = document.createElement('div');
+                        vodCard.className = 'vod-card';
+                        vodCard.onclick = () => playVod(vod);
+                        
+                        const recordedDate = new Date(vod.recordedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        vodCard.innerHTML = `
+                            <div class="vod-thumbnail">📼</div>
+                            <div class="vod-info">
+                                <div class="vod-title">${vod.streamName}</div>
+                                <div class="vod-date">${recordedDate}</div>
+                            </div>
+                        `;
+                        
+                        grid.appendChild(vodCard);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load VODs:', error);
+                document.getElementById('vodsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <p>Failed to load past broadcasts</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function playVod(vod) {
+            // Navigate to a VOD player page (we'll create this next)
+            window.location.href = `/vod-player.html?vodPath=${vod.vodPath}`;
+        }
+    </script>
+</body>
+</html>
