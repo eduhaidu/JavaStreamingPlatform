@@ -1,6 +1,5 @@
 package org.distributed.streaming;
 
-import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,6 +59,10 @@ public class StreamManager extends MultiThreadedApplicationAdapter {
      * Validate stream key by calling the Spring Boot API
      */
     private StreamKeyValidationResult validateStreamKey(String streamKey) {
+        System.out.println("=== VALIDATING STREAM KEY ===");
+        System.out.println("Stream key: " + streamKey);
+        System.out.println("API URL: " + VALIDATION_API_URL + streamKey);
+        
         try {
             Request request = new Request.Builder()
                 .url(VALIDATION_API_URL + streamKey)
@@ -67,8 +70,12 @@ public class StreamManager extends MultiThreadedApplicationAdapter {
                 .build();
 
             try (Response response = httpClient.newCall(request).execute()) {
+                System.out.println("API Response code: " + response.code());
+                
                 if (response.isSuccessful() && response.body() != null) {
                     String responseBody = response.body().string();
+                    System.out.println("API Response body: " + responseBody);
+                    
                     JsonObject json = gson.fromJson(responseBody, JsonObject.class);
                     
                     boolean valid = json.get("valid").getAsBoolean();
@@ -76,22 +83,26 @@ public class StreamManager extends MultiThreadedApplicationAdapter {
                         Long userId = json.get("userId").getAsLong();
                         String username = json.get("username").getAsString();
                         logger.info("Stream key validated successfully for user: {} (ID: {})", username, userId);
-                        System.out.println("Stream key validated for user: " + username + " (ID: " + userId + ")");
+                        System.out.println("✓ Stream key validated for user: " + username + " (ID: " + userId + ")");
                         return new StreamKeyValidationResult(true, userId, username);
                     } else {
                         logger.warn("Invalid stream key: {}", streamKey);
-                        System.out.println("Invalid stream key: " + streamKey);
+                        System.out.println("✗ Invalid stream key: " + streamKey);
                         return new StreamKeyValidationResult(false, null, null);
                     }
                 } else {
                     logger.error("Failed to validate stream key. HTTP status: {}", response.code());
-                    System.out.println("Failed to validate stream key. HTTP status: " + response.code());
+                    System.out.println("✗ Failed to validate stream key. HTTP status: " + response.code());
+                    if (response.body() != null) {
+                        System.out.println("Response body: " + response.body().string());
+                    }
                     return new StreamKeyValidationResult(false, null, null);
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Error validating stream key", e);
-            System.out.println("Error validating stream key: " + e.getMessage());
+            System.out.println("✗ Error validating stream key: " + e.getMessage());
+            e.printStackTrace();
             return new StreamKeyValidationResult(false, null, null);
         }
     }
@@ -227,5 +238,10 @@ public class StreamManager extends MultiThreadedApplicationAdapter {
         public String getUsername() {
             return username;
         }
+
+        public String toString() {
+            return "StreamKeyValidationResult{valid=" + valid + ", userId=" + userId + ", username='" + username + "'}";
+        }
+
     }
 }

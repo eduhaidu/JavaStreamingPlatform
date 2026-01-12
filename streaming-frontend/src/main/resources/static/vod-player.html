@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VOD Player - Streaming Platform</title>
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0e0e10;
+            color: #efeff1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Header */
+        .header {
+            background-color: #18181b;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2c2c34;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #9147ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-btn {
+            padding: 8px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            background-color: transparent;
+            color: #efeff1;
+            border: 1px solid #464649;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #464649;
+        }
+
+        /* Player Container */
+        .player-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 30px;
+        }
+
+        .video-wrapper {
+            background-color: #18181b;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-js {
+            width: 100%;
+            height: 70vh;
+        }
+
+        .video-info {
+            padding: 20px;
+            background-color: #18181b;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .video-info h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #efeff1;
+        }
+
+        .video-meta {
+            display: flex;
+            gap: 20px;
+            color: #adadb8;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px 20px;
+            font-size: 18px;
+            color: #adadb8;
+        }
+
+        .error {
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .error h2 {
+            font-size: 28px;
+            color: #ff4444;
+            margin-bottom: 15px;
+        }
+
+        .error p {
+            color: #adadb8;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11 5v14l11-7z"/>
+            </svg>
+            VOD Player
+        </h1>
+        <a href="javascript:history.back()" class="back-btn">← Back</a>
+    </div>
+
+    <!-- Player Container -->
+    <div class="player-container">
+        <div id="loadingMsg" class="loading">
+            Loading video...
+        </div>
+
+        <div id="errorMsg" class="error" style="display: none;">
+            <h2>Video Not Found</h2>
+            <p>The video you're trying to watch is not available.</p>
+        </div>
+
+        <div id="playerWrapper" style="display: none;">
+            <div class="video-wrapper">
+                <video id="vodPlayer" class="video-js vjs-big-play-centered" controls preload="auto">
+                    <p class="vjs-no-js">
+                        To view this video please enable JavaScript, and consider upgrading to a web browser that
+                        <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+                    </p>
+                </video>
+            </div>
+
+            <div class="video-info" id="videoInfo">
+                <h2 id="videoTitle">Past Broadcast</h2>
+                <div class="video-meta">
+                    <span id="recordedDate"></span>
+                    <span id="duration"></span>
+                    <span id="fileSize"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    <script>
+        // Get vodPath from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const vodPath = urlParams.get('vodPath');
+
+        if (!vodPath) {
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'block';
+        } else {
+            // vodPath format: "vod/streamName_timestamp/"
+            // Remove "vod/" prefix and trailing slash
+            let cleanPath = vodPath.replace(/^vod\//, '').replace(/\/$/, '');
+            
+            // Extract stream name (part before underscore-timestamp)
+            let streamName = cleanPath;
+            if (cleanPath.includes('_')) {
+                streamName = cleanPath.substring(0, cleanPath.lastIndexOf('_'));
+            }
+
+            // Construct the playlist URL: /vod/{vodPath}/{filename}
+            const playlistUrl = `/vod/${cleanPath}/${streamName}.m3u8`;
+
+            console.log('VOD Path:', vodPath);
+            console.log('Clean Path:', cleanPath);
+            console.log('Stream Name:', streamName);
+            console.log('Loading VOD from:', playlistUrl);
+
+            // Initialize Video.js player
+            const player = videojs('vodPlayer', {
+                controls: true,
+                autoplay: false,
+                preload: 'auto',
+                fluid: false,
+                aspectRatio: '16:9',
+                controlBar: {
+                    volumePanel: { inline: false }
+                }
+            });
+
+            // Set the source
+            player.src({
+                src: playlistUrl,
+                type: 'application/x-mpegURL'
+            });
+
+            // Handle player ready
+            player.ready(function() {
+                console.log('Player ready, loading source...');
+                document.getElementById('loadingMsg').style.display = 'none';
+                document.getElementById('playerWrapper').style.display = 'block';
+                
+                // Fetch VOD metadata
+                fetch('/vod')
+                    .then(response => response.json())
+                    .then(vods => {
+                        // Find the matching VOD by path
+                        const vod = vods.find(v => v.vodPath === vodPath);
+                        if (vod) {
+                            document.getElementById('videoTitle').textContent = vod.streamName + ' - Past Broadcast';
+                            
+                            if (vod.recordedAt) {
+                                const date = new Date(vod.recordedAt);
+                                document.getElementById('recordedDate').textContent = 
+                                    'Recorded: ' + date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                            }
+                            
+                            if (vod.duration) {
+                                const hours = Math.floor(vod.duration / 3600);
+                                const minutes = Math.floor((vod.duration % 3600) / 60);
+                                const seconds = vod.duration % 60;
+                                let durationStr = '';
+                                if (hours > 0) durationStr += hours + 'h ';
+                                if (minutes > 0) durationStr += minutes + 'm ';
+                                durationStr += seconds + 's';
+                                document.getElementById('duration').textContent = 'Duration: ' + durationStr;
+                            }
+                            
+                            if (vod.fileSize) {
+                                const sizeMB = (vod.fileSize / (1024 * 1024)).toFixed(2);
+                                document.getElementById('fileSize').textContent = 'Size: ' + sizeMB + ' MB';
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.warn('Could not fetch VOD metadata:', err);
+                    });
+            });
+
+            // Handle errors
+            player.on('error', function() {
+                const error = player.error();
+                console.error('Player error:', error);
+                document.getElementById('loadingMsg').style.display = 'none';
+                document.getElementById('playerWrapper').style.display = 'none';
+                document.getElementById('errorMsg').style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>

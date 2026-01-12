@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Channel - Streaming Platform</title>
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
     <style>
         * {
             margin: 0;
@@ -255,6 +256,57 @@
             border-radius: 8px;
             text-align: center;
         }
+
+        /* Video Modal */
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-modal.active {
+            display: flex;
+        }
+
+        .video-modal-content {
+            width: 90%;
+            max-width: 1200px;
+            position: relative;
+        }
+
+        .video-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .video-close:hover {
+            color: #9147ff;
+        }
+
+        .video-js {
+            width: 100%;
+            height: 70vh;
+        }
     </style>
 </head>
 <body>
@@ -407,7 +459,7 @@
                 document.getElementById('liveStreamSection').style.display = 'block';
                 document.getElementById('liveStreamTitle').textContent = profile.currentStreamName || 'Live Stream';
                 document.getElementById('liveStreamCard').onclick = () => {
-                    window.location.href = `/index.html?stream=${profile.currentStreamName}`;
+                    openLiveStream(profile.currentStreamName);
                 };
             }
         }
@@ -463,9 +515,68 @@
         }
         
         function playVod(vod) {
-            // Navigate to a VOD player page (we'll create this next)
+            // Navigate to a VOD player page
             window.location.href = `/vod-player.html?vodPath=${vod.vodPath}`;
         }
+
+        function openLiveStream(streamName) {
+            const modal = document.getElementById('videoModal');
+            const player = videojs('livePlayer');
+            
+            const playlistUrl = `/stream/${streamName}.m3u8`;
+            console.log('Playing live stream:', playlistUrl);
+            
+            player.src({
+                src: playlistUrl,
+                type: 'application/x-mpegURL'
+            });
+            
+            modal.classList.add('active');
+            player.play();
+        }
+
+        function closeVideoModal() {
+            const modal = document.getElementById('videoModal');
+            const player = videojs('livePlayer');
+            
+            player.pause();
+            player.src('');
+            modal.classList.remove('active');
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeVideoModal();
+            }
+        });
+
+        // Close modal on background click
+        document.getElementById('videoModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'videoModal') {
+                closeVideoModal();
+            }
+        });
+    </script>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="video-modal">
+        <div class="video-modal-content">
+            <button class="video-close" onclick="closeVideoModal()">×</button>
+            <video id="livePlayer" class="video-js vjs-big-play-centered" controls preload="auto"></video>
+        </div>
+    </div>
+
+    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    <script>
+        // Initialize Video.js player
+        const player = videojs('livePlayer', {
+            controls: true,
+            autoplay: false,
+            preload: 'auto',
+            fluid: false,
+            aspectRatio: '16:9'
+        });
     </script>
 </body>
 </html>

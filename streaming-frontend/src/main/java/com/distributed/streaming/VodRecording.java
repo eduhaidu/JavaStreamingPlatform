@@ -3,7 +3,14 @@ package com.distributed.streaming;
 import java.time.LocalDateTime;
 
 import com.distributed.streaming.entity.User;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class VodRecording {
@@ -15,10 +22,10 @@ public class VodRecording {
     private String streamName;
     private String vodPath;  // Path in MinIO: vod/streamName_timestamp/
     private LocalDateTime recordedAt;
-    private Long duration;   // Duration in seconds (optional)
+    private Integer duration;   // Duration in seconds (optional)
     private Long fileSize;   // Total size in bytes (optional)
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
     
@@ -63,11 +70,11 @@ public class VodRecording {
         this.recordedAt = recordedAt;
     }
 
-    public Long getDuration() {
+    public Integer getDuration() {
         return duration;
     }
 
-    public void setDuration(Long duration) {
+    public void setDuration(Integer duration) {
         this.duration = duration;
     }
 

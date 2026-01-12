@@ -1,20 +1,27 @@
 package com.distributed.streaming;
 
+import java.time.LocalDateTime;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import com.distributed.streaming.entity.User;
 import com.distributed.streaming.repository.UserRepository;
+import com.distributed.streaming.repository.VodRecordingRepository;
 
 @Service
 public class StreamEventListener {
     private final StreamRepository streamRepository;
     private final UserRepository userRepository;
+    private final VodRecordingRepository vodRecordingRepository;
 
-    public StreamEventListener(StreamRepository streamRepository, UserRepository userRepository) {
+    public StreamEventListener(StreamRepository streamRepository, 
+                               UserRepository userRepository,
+                               VodRecordingRepository vodRecordingRepository) {
         this.streamRepository = streamRepository;
         this.userRepository = userRepository;
+        this.vodRecordingRepository = vodRecordingRepository;
         System.out.println("StreamEventListener initialized - ready to consume Kafka messages");
     }
 
@@ -27,7 +34,7 @@ public class StreamEventListener {
         System.out.println("Stream Name: " + streamName);
         System.out.println("Message: " + message);
 
-        // Parse message format: "START|userId|username" or "STOP"
+        // Parse message format: "START|userId|username", "STOP", or "ARCHIVE|streamName|vodPath|fileSize"
         if(message.startsWith("START")){
             System.out.println("Stream started: " + streamName);
             
@@ -83,6 +90,49 @@ public class StreamEventListener {
                 System.out.println("Stream marked as ended in database: " + streamName);
             } else {
                 System.out.println("Warning: Stream not found in database: " + streamName);
+            }
+        } else if (message.startsWith("ARCHIVE")) {
+            System.out.println("Stream archived: " + streamName);
+            
+            // Parse ARCHIVE message: "ARCHIVE|streamName|vodPath|fileSize"
+            String[] parts = message.split("\\|");
+            if (parts.length >= 4) {
+                try {
+                    String originalStreamName = parts[1];
+                    String vodPath = parts[2];
+                    long fileSize = Long.parseLong(parts[3]);
+                    
+                    // Find the original stream to get user association
+                    StreamMetadata stream = streamRepository.findByStreamName(originalStreamName);
+                    if (stream != null && stream.getUser() != null) {
+                        // Create VOD recording
+                        VodRecording vodRecording = new VodRecording();
+                        vodRecording.setStreamName(originalStreamName);
+                        vodRecording.setVodPath(vodPath);
+                        vodRecording.setRecordedAt(LocalDateTime.now());
+                        vodRecording.setFileSize(fileSize);
+                        vodRecording.setUser(stream.getUser());
+                        
+                        // Calculate duration from stream metadata
+                        if (stream.getStartTime() != null && stream.getEndTime() != null) {
+                            long duration = java.time.Duration.between(
+                                stream.getStartTime(), 
+                                stream.getEndTime()
+                            ).getSeconds();
+                            vodRecording.setDuration((int) duration);
+                        }
+                        
+                        vodRecordingRepository.save(vodRecording);
+                        System.out.println("✓ VOD recording saved: " + vodPath + " for user: " + stream.getUser().getUsername());
+                    } else {
+                        System.out.println("Warning: Cannot create VOD - stream not found or no user: " + originalStreamName);
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Error parsing ARCHIVE message: " + message);
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Invalid ARCHIVE message format: " + message);
             }
         }
     }

@@ -20,10 +20,17 @@ import java.util.concurrent.Executors;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 
+import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
+import io.minio.Result;
 import io.minio.UploadObjectArgs;
+import io.minio.messages.Item;
 
 /**
  *
@@ -36,6 +43,8 @@ public class TranscodingWorker {
     private static final ConcurrentHashMap<String, Thread> monitorThreads = new ConcurrentHashMap<>();
     private static final Set<String> activeStreams = ConcurrentHashMap.newKeySet();
     private static volatile boolean running = true;
+    private static KafkaProducer<String, String> producer;
+    private static final String KAFKA_TOPIC = "live-stream";
 
     private static final String MINIO_URL = "http://localhost:9000";
     private static final String MINIO_USER = "minioadmin";
@@ -48,8 +57,18 @@ public class TranscodingWorker {
             System.out.println("Shutting down TranscodingWorker...");
             running = false;
             stopAllProcesses();
+            if (producer != null) {
+                producer.close();
+            }
             executor.shutdown();
         }));
+
+        // Initialize Kafka producer
+        Properties producerProps = new Properties();
+        producerProps.put("bootstrap.servers", "localhost:9092");
+        producerProps.put("key.serializer", StringSerializer.class.getName());
+        producerProps.put("value.serializer", StringSerializer.class.getName());
+        producer = new KafkaProducer<>(producerProps);
 
         Properties props = new Properties();
         props.put("bootstrap.servers", "localhost:9092");
@@ -136,6 +155,7 @@ public class TranscodingWorker {
                 .build();
             
             String vodPrefix = "vod/" + streamName + "_" + System.currentTimeMillis() + "/";
+            long totalSize = 0;
             
             // Upload all segments and playlist with VOD prefix
             for (File file : files) {
@@ -151,10 +171,55 @@ public class TranscodingWorker {
                         .contentType(contentType)
                         .build()
                 );
+                totalSize += file.length();
                 System.out.println("Archived: " + vodObjectName);
             }
             
             System.out.println("✓ Stream archived successfully: " + vodPrefix);
+            
+            // Delete live stream chunks from MinIO to prevent old footage from appearing
+            System.out.println("Cleaning up live stream chunks from MinIO...");
+            try {
+                Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                        .bucket(MINIO_BUCKET)
+                        .prefix(streamName)
+                        .build()
+                );
+                
+                int deletedCount = 0;
+                for (Result<Item> result : results) {
+                    Item item = result.get();
+                    String objectName = item.objectName();
+                    
+                    // Only delete objects that don't have the vod/ prefix (live stream chunks)
+                    if (!objectName.startsWith("vod/")) {
+                        minioClient.removeObject(
+                            RemoveObjectArgs.builder()
+                                .bucket(MINIO_BUCKET)
+                                .object(objectName)
+                                .build()
+                        );
+                        deletedCount++;
+                        System.out.println("Deleted live chunk: " + objectName);
+                    }
+                }
+                System.out.println("✓ Cleaned up " + deletedCount + " live stream chunks from MinIO");
+            } catch (Exception cleanupEx) {
+                System.err.println("Warning: Failed to cleanup live stream chunks from MinIO");
+                cleanupEx.printStackTrace();
+            }
+            
+            // Send Kafka message with VOD details
+            String vodMessage = "ARCHIVE|" + streamName + "|" + vodPrefix + "|" + totalSize;
+            producer.send(new ProducerRecord<>(KAFKA_TOPIC, vodMessage), (metadata, exception) -> {
+                if (exception == null) {
+                    System.out.println("VOD archive message sent to Kafka: " + vodMessage);
+                } else {
+                    System.err.println("Failed to send VOD archive message");
+                    exception.printStackTrace();
+                }
+            });
             
             // Cleanup local files after archiving
             for (File file : files) {
